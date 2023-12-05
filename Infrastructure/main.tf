@@ -81,7 +81,7 @@ resource "aws_subnet" "public-ap-south-1b" {
 
 
 resource "aws_eip" "nat" {
-  vpc = true
+  domain = "vpc"
   tags = {
     Name = "nat"
   }
