@@ -5,6 +5,7 @@ pipeline {
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY_devops')
         AWS_DEFAULT_REGION    = 'ap-south-1'
         RJ_APPLICATION = 'RJ'
+        AWS_PROFILE = 'AWS_DEVOPS'
     }
     parameters{
         choice choices: ["apply","destroy"], name: "createordestory"
@@ -29,8 +30,11 @@ pipeline {
                     
                     sh """
                         cd ${terraformDir}
-                        AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY} sudo terraform init
-                        AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY} sudo terraform plan
+                        sudo aws configure set aws_access_key_id ${env.AWS_ACCESS_KEY_ID}
+                        sudo aws configure set aws_secret_access_key ${env.AWS_SECRET_ACCESS_KEY}
+                        sudo aws configure set region ${env.AWS_DEFAULT_REGION}
+                        sudo terraform init
+                        sudo terraform plan
                     """
                 }
             }
@@ -43,7 +47,21 @@ pipeline {
                     
                     sh """ 
                     cd ${terraformDir}
-                        AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY} sudo terraform ${params.createordestory} --auto-approve
+                        sudo terraform ${params.createordestory} --auto-approve
+                    """
+                }
+            }
+        }
+        stage('deploy sample app'){
+            steps{
+                script {
+                    def yaml = 'Infrastructure/manifests'
+                    sh """
+                    cd ${yaml}
+                        sudo aws eks --region ap-south-1 update-kubeconfig --name demo
+                        sudo kubectl get pods
+                        sudo kubectl apply -f deployment.yaml
+                        sudo kubectl apply -f service.yaml
                     """
                 }
             }
