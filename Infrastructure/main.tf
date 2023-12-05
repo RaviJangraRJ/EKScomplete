@@ -12,7 +12,7 @@ provider "aws" {
 }
 
 resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc_cidr
 
   tags = {
     Name = "main"
@@ -31,7 +31,7 @@ resource "aws_internet_gateway" "igw" {
 
 resource "aws_subnet" "private-ap-south-1a" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.0.0/19"
+  cidr_block        = var.subnet_cidr1
   availability_zone = "ap-south-1a"
 
   tags = {
@@ -43,7 +43,7 @@ resource "aws_subnet" "private-ap-south-1a" {
 
 resource "aws_subnet" "private-ap-south-1b" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.32.0/19"
+  cidr_block        = var.subnet_cidr2
   availability_zone = "ap-south-1b"
 
   tags = {
@@ -55,7 +55,7 @@ resource "aws_subnet" "private-ap-south-1b" {
 
 resource "aws_subnet" "public-ap-south-1a" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.64.0/19"
+  cidr_block              = var.subnet_cidr3
   availability_zone       = "ap-south-1a"
   map_public_ip_on_launch = true
 
@@ -68,7 +68,7 @@ resource "aws_subnet" "public-ap-south-1a" {
 
 resource "aws_subnet" "public-ap-south-1b" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.96.0/19"
+  cidr_block              = var.subnet_cidr4
   availability_zone       = "ap-south-1b"
   map_public_ip_on_launch = true
 
