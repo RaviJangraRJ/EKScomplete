@@ -1,0 +1,61 @@
+pipeline {
+    agent any
+    environment {
+        AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID_devops')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY_devops')
+        AWS_DEFAULT_REGION    = 'ap-south-1'
+        RJ_APPLICATION = 'RJ'
+    }
+    parameters{
+        choice choices: ["apply","destroy"], name: "createordestory"
+    }
+    stages {
+        stage('Show the environment') {
+            steps {
+                echo "Application name is ${RJ_APPLICATION}"
+                echo "Build ID is ${env.BUILD_ID}"
+            }
+        }
+        stage('Git Checkout') {
+            steps {
+                git branch: 'develop', credentialsId: 'foodiesPat', url: 'https://github.com/RaviJangraRJ/EKScomplete.git'
+            }
+        }
+
+        stage('Terraform Init and plan') {
+            steps {
+                script {
+                    def terraformDir = 'EKS'
+                    
+                    sh """
+                        cd ${terraformDir}
+                        AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY} sudo terraform init
+                        AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY} sudo terraform plan
+                    """
+                }
+            }
+        }
+        
+        stage('Terraform apply'){
+            steps{
+                script {
+                    def terraformDir = 'EKS'
+                    
+                    sh """ 
+                    cd ${terraformDir}
+                        AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID} AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY} sudo terraform ${params.createordestory} --auto-approve
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Terraform apply succeeded!'
+        }
+        failure {
+            echo 'Terraform apply failed!'
+        }
+    }
+}
